@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/PuerkitoBio/goquery v1.6.1
-	github.com/alexflint/go-arg v1.3.0 // indirect
+	github.com/alexflint/go-arg v1.3.0
 	github.com/andybalholm/cascadia v1.2.0 // indirect
 	github.com/chromedp/chromedp v0.6.10 // indirect
 	github.com/geziyor/geziyor v0.0.0-20210128175025-129402d754a6
