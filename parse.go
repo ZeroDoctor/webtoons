@@ -19,6 +19,9 @@ import (
 
 // the most volatile piece of code. if they make same changes to the front-end, everything breaks
 func parseInfo(g *geziyor.Geziyor, r *client.Response) {
+	if args.Verbose {
+		ppt.Infoln("parsing comic info...")
+	}
 	var comic Info
 	comic.Title = r.HTMLDoc.Find(".info").Find(".subj").Text()
 	comic.Subscriber = r.HTMLDoc.Find(".grade_area").Find("span.ico_subscribe + em").Text()
@@ -45,6 +48,9 @@ func parseInfo(g *geziyor.Geziyor, r *client.Response) {
 
 // finds out what episode to queue for downloading
 func parseComic(g *geziyor.Geziyor, r *client.Response) {
+	if args.Verbose {
+		ppt.Infoln("parsing episode list...")
+	}
 	r.HTMLDoc.Find("#topEpisodeList").Find("div.episode_cont").Find("li").Each(
 		func(_ int, s *goquery.Selection) {
 			episodeNumber, _ := s.Attr("data-episode-no")
@@ -74,6 +80,9 @@ func readImage(resp *http.Response) ([]byte, error) {
 }
 
 func createPDF(title string, pages [][]byte, imgType []string) {
+	if args.Verbose {
+		ppt.Infoln("creating " + title + ".pdf...")
+	}
 	pdf := gofpdf.NewCustom(&gofpdf.InitType{
 		OrientationStr: "P",
 		UnitStr:        "in",
@@ -109,10 +118,14 @@ func createPDF(title string, pages [][]byte, imgType []string) {
 func parseEpisode(g *geziyor.Geziyor, r *client.Response) {
 	defer func() {
 		if r := recover(); r != nil {
-			ppt.Errorln(r)
+			ppt.Errorln("recovered from painc:", r)
 			os.Exit(1)
 		}
 	}()
+
+	if args.Verbose {
+		ppt.Infoln("parsing episode panels...")
+	}
 
 	var imgType []string
 	var panels [][]byte

@@ -111,6 +111,9 @@ func main() {
 			ParseFunc:   parseEpisode,
 			LogDisabled: !args.Verbose,
 		}).Start()
+		if args.Verbose {
+			ppt.Verboseln("finished with " + url + "...")
+		}
 	}
 
 	ppt.Infoln("Done!")
