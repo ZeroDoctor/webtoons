@@ -149,7 +149,11 @@ func parseComic(urlStr string, bar *mpb.Bar) {
 				func(i int, s *goquery.Selection) {
 					episodeNumber, _ := s.Attr("data-episode-no")
 					num, err := strconv.Atoi(episodeNumber)
-					if err != nil || num > args.End || num < args.Start {
+					if err != nil {
+						ppt.Errorln("failed to parse episode number:", err.Error())
+						os.Exit(1)
+					}
+					if args.End != -1 && (num > args.End || num < args.Start) {
 						ppt.Verboseln("Skipped episode:", num)
 						return
 					}

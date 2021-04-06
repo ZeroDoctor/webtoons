@@ -31,3 +31,4 @@ webtoons.exe -t=1099 -s=1 -e=5
 
 * correct the size of each panel
 * menu of comics when no arguments given (long term goal)
+* cancel download gracefully
