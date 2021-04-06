@@ -103,7 +103,7 @@ func addMultiProgress(mp []Process) {
 			if len(mp)-(i+1) < args.Workers {
 				waitLimit = (len(mp) - 1) - i
 			}
-			ppt.Infoln("added:", waitLimit)
+			ppt.Infoln("next:", waitLimit)
 			time.Sleep(time.Millisecond * 100)
 			p.Wait()
 			wg.Add(waitLimit)
