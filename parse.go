@@ -98,10 +98,16 @@ func parseInfo(list string, bar *mpb.Bar) {
 				ppt.Infoln("parsing comic info...")
 			}
 			var comic Info
+			var err error
 			comic.Title = r.HTMLDoc.Find(".info").Find(".subj").Text()
 			comic.Subscriber = r.HTMLDoc.Find(".grade_area").Find("span.ico_subscribe + em").Text()
 			comic.Rating = r.HTMLDoc.Find("#_starScoreAverage").Text()
 			comic.Summary = r.HTMLDoc.Find("#_asideDetail > p.summary").Text()
+			end, _ := r.HTMLDoc.Find("#_listUl").Find("li").Attr("data-episode-no")
+			comic.End, err = strconv.Atoi(end)
+			if err != nil {
+				ppt.Errorln("failed to parse latest episode number:", err.Error())
+			}
 
 			inc(bar, 1)
 			var prefixes []string
@@ -136,6 +142,11 @@ func parseInfo(list string, bar *mpb.Bar) {
 
 // finds out what episode to queue for downloading
 func parseComic(urlStr string, bar *mpb.Bar) {
+	if args.End <= -1 {
+		totalEp = float64(comic.End)
+		args.End = comic.End
+	}
+
 	if bar != nil {
 		bar.SetTotal(int64(totalEp), false)
 	}
@@ -293,9 +304,6 @@ func parseEpisode(urlStr string, bar *mpb.Bar) {
 						}
 
 						imageType := resp.Header["Content-Type"][0][len("image/"):]
-						if args.Verbose {
-							ppt.Verbose(imageType)
-						}
 						imgType = append(imgType, imageType)
 
 						panels = append(panels, panel)

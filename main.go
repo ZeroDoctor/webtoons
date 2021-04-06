@@ -15,6 +15,7 @@ type Info struct {
 	Rating     string
 	Summary    string
 	Creators   []string // i.e written by ann | art by frank
+	End        int
 }
 
 var (
