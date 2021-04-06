@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/alexflint/go-arg"
-	"github.com/geziyor/geziyor"
 	ppt "github.com/zerodoctor/goprettyprinter"
 )
 
@@ -26,8 +25,6 @@ var (
 	info       = make(chan Info, 1)
 	wait       = make(chan bool, 1)
 	comic      Info
-	start      int
-	end        int
 )
 
 var args struct {
@@ -63,6 +60,7 @@ func createInit(comic Info) {
 }
 
 func main() {
+	// logging settings
 	ppt.DisplayWarning = false
 	ppt.SetInfoColor(ppt.Cyan)
 	ppt.Decorator("", "|", "")
@@ -73,48 +71,9 @@ func main() {
 
 	// parse arguments
 	arg.MustParse(&args)
-	title := args.Title
-	start = args.Start
-	end = args.End
 	if args.Verbose {
 		ppt.SetCurrentLevel(ppt.VerboseLevel)
 	}
 
-	// * note: if webtoons update there url schema, we would have to figure out this all over again
-	list := "https://www.webtoons.com/en/GENRE/TITLE/list?title_no=" + title
-	url := "http://www.webtoons.com/en/GENRE/TITLE/CHAPTER/viewer?title_no=" + title + "&episode_no=1"
-
-	// parse comic infomation like title, author, genre, etc.
-	geziyor.NewGeziyor(&geziyor.Options{
-		StartURLs:   []string{list},
-		ParseFunc:   parseInfo,
-		LogDisabled: !args.Verbose,
-	}).Start()
-
-	comic = <-info
-	createInit(comic)
-
-	// parse comic episode list
-	geziyor.NewGeziyor(&geziyor.Options{
-		StartURLs:   []string{url},
-		ParseFunc:   parseComic,
-		LogDisabled: !args.Verbose,
-	}).Start()
-
-	// ensures that the code above executes first before continuing
-	<-wait
-
-	// parse episode to get a list of panels to create final pdf
-	for url := range episodeMap {
-		geziyor.NewGeziyor(&geziyor.Options{
-			StartURLs:   []string{url},
-			ParseFunc:   parseEpisode,
-			LogDisabled: !args.Verbose,
-		}).Start()
-		if args.Verbose {
-			ppt.Verboseln("finished with " + url + "...")
-		}
-	}
-
-	ppt.Infoln("Done!")
+	parse()
 }

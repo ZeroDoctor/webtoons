@@ -17,6 +17,46 @@ import (
 	ppt "github.com/zerodoctor/goprettyprinter"
 )
 
+func parse() {
+	// * note: if webtoons update there url schema, we would have to figure out this all over again
+	list := "https://www.webtoons.com/en/GENRE/TITLE/list?title_no=" + args.Title
+	url := "http://www.webtoons.com/en/GENRE/TITLE/CHAPTER/viewer?title_no=" + args.Title + "&episode_no=1"
+
+	// parse comic infomation like title, author, genre, etc.
+	geziyor.NewGeziyor(&geziyor.Options{
+		StartURLs:   []string{list},
+		ParseFunc:   parseInfo,
+		LogDisabled: !args.Verbose,
+	}).Start()
+
+	comic = <-info
+	createInit(comic)
+
+	// parse comic episode list
+	geziyor.NewGeziyor(&geziyor.Options{
+		StartURLs:   []string{url},
+		ParseFunc:   parseComic,
+		LogDisabled: !args.Verbose,
+	}).Start()
+
+	// ensures that the code above executes first before continuing
+	<-wait
+
+	// parse episode to get a list of panels to create final pdf
+	for url := range episodeMap {
+		geziyor.NewGeziyor(&geziyor.Options{
+			StartURLs:   []string{url},
+			ParseFunc:   parseEpisode,
+			LogDisabled: !args.Verbose,
+		}).Start()
+		if args.Verbose {
+			ppt.Verboseln("finished with " + url + "...")
+		}
+	}
+
+	ppt.Infoln("Done!")
+}
+
 // the most volatile piece of code. if they make same changes to the front-end, everything breaks
 func parseInfo(g *geziyor.Geziyor, r *client.Response) {
 	if args.Verbose {
@@ -55,7 +95,7 @@ func parseComic(g *geziyor.Geziyor, r *client.Response) {
 		func(_ int, s *goquery.Selection) {
 			episodeNumber, _ := s.Attr("data-episode-no")
 			num, err := strconv.Atoi(episodeNumber)
-			if err != nil || num > end || num < start {
+			if err != nil || num > args.End || num < args.Start {
 				ppt.Verboseln("Skipped episode:", num)
 				return
 			}
