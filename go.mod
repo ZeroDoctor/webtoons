@@ -12,8 +12,8 @@ require (
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/prometheus/client_golang v1.10.0 // indirect
 	github.com/prometheus/common v0.20.0 // indirect
-	github.com/signintech/gopdf v0.9.15
 	github.com/temoto/robotstxt v1.1.2 // indirect
+	github.com/vbauerster/mpb/v6 v6.0.3
 	github.com/zerodoctor/goprettyprinter v0.0.0-20210315132635-0da4ba3a27a9
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4 // indirect
 	golang.org/x/sys v0.0.0-20210403161142-5e06dd20ab57 // indirect

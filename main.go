@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -30,38 +28,15 @@ var (
 var args struct {
 	Title   string `arg:"required,-t,--title" help:"desire title number to download"`
 	Start   int    `arg:"-s,--start" help:"episode number to start from" default:"1"`
-	End     int    `arg:"-e,--end" help:"episode number to end on" default:"50000"` // TODO: change 50000 to something else
+	End     int    `arg:"-e,--end" help:"episode number to end on" default:"-1"`
+	Workers int    `arg:"-w,--workers" help:"number of files to download async" default:"5"`
 	Verbose bool   `arg:"-v,--verbose" help:"some extra logging"`
-}
-
-// create folder and about file from comic info
-func createInit(comic Info) {
-	if _, err := os.Stat("./" + comic.Title); os.IsNotExist(err) {
-		err := os.Mkdir("./"+comic.Title, 0755)
-		if err != nil {
-			ppt.Errorln("failed to create folder:", err.Error())
-			os.Exit(1)
-		}
-	}
-
-	if _, err := os.Stat("./" + comic.Title + "/about.json"); os.IsNotExist(err) {
-		data, err := json.MarshalIndent(comic, "", "  ")
-		if err != nil {
-			ppt.Errorln("failed to marshal comic info:", err.Error())
-			os.Exit(1)
-		}
-
-		err = ioutil.WriteFile("./"+comic.Title+"/about.json", data, 0755)
-		if err != nil {
-			ppt.Errorln("failed to write to file:", err.Error())
-			os.Exit(1)
-		}
-	}
 }
 
 func main() {
 	// logging settings
 	ppt.DisplayWarning = false
+	ppt.Init()
 	ppt.SetInfoColor(ppt.Cyan)
 	ppt.Decorator("", "|", "")
 	ppt.LoggerFlags = ppt.FILE | ppt.LINE
@@ -71,9 +46,19 @@ func main() {
 
 	// parse arguments
 	arg.MustParse(&args)
-	if args.Verbose {
-		ppt.SetCurrentLevel(ppt.VerboseLevel)
+
+	if args.End != -1 && args.End < args.Start {
+		ppt.Errorln("ending number can not be smaller than starting number")
+		os.Exit(1)
 	}
 
+	if args.Verbose {
+		ppt.SetCurrentLevel(ppt.VerboseLevel)
+		parse()
+		return // exit program
+	}
+
+	initProgress()
 	parse()
+	ppt.Infoln("Done!")
 }

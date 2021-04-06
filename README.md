@@ -3,18 +3,20 @@
 ## Usage
 
 ```txt
-Usage: webtoons --title TITLE --start START [--end END] [--verbose]
+Usage: webtoons --title TITLE --start START [--end END] [--workers WORKERS] [--verbose]
 
 Options:
-    --title TITLE, -t TITLE desire title number to download
+    --title, -t TITLE     desire title number to download
 
-    --start START, -s START episode number to start from
+    --start, -s START     episode number to start from
 
-    --end END, -e END       episode number to end on [default: 50000]
+    --workers, -w WORKERS number of files to download async [default: 5]
 
-    --verbose, -v           some extra logging
+    --end, -e END         episode number to end on [default: 50000]
 
-    --help, -h              display this help and exit
+    --verbose, -v         some extra logging
+
+    --help, -h            display this help and exit
 ```
 
 ---
@@ -27,8 +29,5 @@ webtoons.exe -t=1099 -s=1 -e=5
 
 ## TODO
 
-* add progress bar
-* remove hard value on end variable
-* add more options?
 * correct the size of each panel
-* menu of comics when no arguments given
+* menu of comics when no arguments given (long term goal)
