@@ -31,3 +31,4 @@ webtoons.exe -t=1099 -s=1 -e=5
 * remove hard value on end variable
 * add more options?
 * correct the size of each panel
+* menu of comics when no arguments given
