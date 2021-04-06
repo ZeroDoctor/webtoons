@@ -30,3 +30,4 @@ webtoons.exe -t=1099 -s=1 -e=5
 * add progress bar
 * remove hard value on end variable
 * add more options?
+* correct the size of each panel
