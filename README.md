@@ -34,7 +34,6 @@ webtoons.exe -t=1099 -s=1 -e=5
 
 ## TODO
 
-* correct height of each panel in pdf
 * handle errors gracefully
 * cancel download gracefully
 

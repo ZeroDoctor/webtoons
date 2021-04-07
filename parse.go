@@ -15,7 +15,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/geziyor/geziyor"
 	"github.com/geziyor/geziyor/client"
-	"github.com/jung-kurt/gofpdf"
+	"github.com/jung-kurt/gofpdf/v2"
 	"github.com/vbauerster/mpb/v6"
 	ppt "github.com/zerodoctor/goprettyprinter"
 )
@@ -217,7 +217,6 @@ func createPDF(title string, pages []Panel, maxWidth, avgHeight float64, bar *mp
 		// desired comic size is 800x1280 pixels which convert to "inches" is 8.33x13.33
 		Size: gofpdf.SizeType{Wd: maxWidth, Ht: avgHeight},
 	})
-	pdf.AddPage()
 	_, h := pdf.GetPageSize()
 	pdf.SetFont("Arial", "B", 16)
 	pdf.Cell(0.0, h/2, "Ignore Page")
@@ -226,6 +225,7 @@ func createPDF(title string, pages []Panel, maxWidth, avgHeight float64, bar *mp
 	pdf.SetCellMargin(0.0)
 
 	for i, p := range pages {
+		pdf.AddPageFormat("P", gofpdf.SizeType{Wd: p.width, Ht: p.height})
 		// get image
 		pdf.RegisterImageReader(title+strconv.Itoa(i), p.iType, bytes.NewBuffer(p.image))
 		if pdf.Ok() {
@@ -234,7 +234,7 @@ func createPDF(title string, pages []Panel, maxWidth, avgHeight float64, bar *mp
 				ImageType: p.iType,
 			}
 			// add image to page
-			pdf.ImageOptions(title+strconv.Itoa(i), 0, -1, p.width, p.height, true, options, 0, "")
+			pdf.ImageOptions(title+strconv.Itoa(i), 0, pdf.GetY(), p.width, p.height, false, options, 0, "")
 		}
 		inc(bar, 1)
 	}
