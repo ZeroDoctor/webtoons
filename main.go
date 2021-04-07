@@ -27,11 +27,13 @@ var (
 )
 
 var args struct {
-	Title   string `arg:"required,-t,--title" help:"desire title number to download"`
-	Start   int    `arg:"-s,--start" help:"episode number to start from" default:"1"`
-	End     int    `arg:"-e,--end" help:"episode number to end on" default:"-1"`
-	Workers int    `arg:"-w,--workers" help:"number of files to download async" default:"5"`
-	Verbose bool   `arg:"-v,--verbose" help:"some extra logging"`
+	TitleNum string `arg:"required,-n,--title_num" help:"desire title number to download"`
+	Genre    string `arg:"-g,--genre" help:"genre specified in url" default:"GENRE"`
+	Title    string `arg:"-t,--title" help:"title specified in url" default:"TITLE"`
+	Start    int    `arg:"-s,--start" help:"episode number to start from" default:"1"`
+	End      int    `arg:"-e,--end" help:"episode number to end on" default:"-1"`
+	Workers  int    `arg:"-w,--workers" help:"number of files to download async" default:"5"`
+	Verbose  bool   `arg:"-v,--verbose" help:"some extra logging"`
 }
 
 func main() {

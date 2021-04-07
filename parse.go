@@ -48,8 +48,8 @@ func createInit(comic Info) {
 
 func parse() {
 	// * note: if webtoons update there url schema, we would have to figure out this all over again
-	list := "https://www.webtoons.com/en/GENRE/TITLE/list?title_no=" + args.Title
-	url := "http://www.webtoons.com/en/GENRE/TITLE/CHAPTER/viewer?title_no=" + args.Title + "&episode_no=1"
+	list := "https://www.webtoons.com/en/" + args.Genre + "/" + args.Title + "/list?title_no=" + args.TitleNum
+	url := "http://www.webtoons.com/en/" + args.Genre + "/" + args.Title + "/CHAPTER/viewer?title_no=" + args.TitleNum + "&episode_no=1"
 
 	// parse comic infomation like title, author, genre, etc.
 	ppt.Infoln("fetching comic from book store:", list)
