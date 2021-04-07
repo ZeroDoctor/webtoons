@@ -20,6 +20,14 @@ import (
 	ppt "github.com/zerodoctor/goprettyprinter"
 )
 
+type Panel struct {
+	url    *url.URL
+	image  []byte
+	iType  string
+	width  float64 // in inches
+	height float64 // in inches
+}
+
 // create folder and about file from comic info
 func createInit(comic Info) {
 	if _, err := os.Stat("./" + comic.Title); os.IsNotExist(err) {
@@ -199,7 +207,7 @@ func readImage(resp *http.Response) ([]byte, error) {
 	return data, nil
 }
 
-func createPDF(title string, pages [][]byte, imgType []string, bar *mpb.Bar) {
+func createPDF(title string, pages []Panel, maxWidth, avgHeight float64, bar *mpb.Bar) {
 	if args.Verbose {
 		ppt.Infoln("creating " + title + ".pdf...")
 	}
@@ -207,23 +215,26 @@ func createPDF(title string, pages [][]byte, imgType []string, bar *mpb.Bar) {
 		OrientationStr: "P",
 		UnitStr:        "in",
 		// desired comic size is 800x1280 pixels which convert to "inches" is 8.33x13.33
-		Size: gofpdf.SizeType{Wd: 8.33, Ht: 13.33},
+		Size: gofpdf.SizeType{Wd: maxWidth, Ht: avgHeight},
 	})
+	pdf.AddPage()
+	_, h := pdf.GetPageSize()
+	pdf.SetFont("Arial", "B", 16)
+	pdf.Cell(0.0, h/2, "Ignore Page")
 	// remove pdf header
-	pdf.SetTopMargin(0.0)
-	pdf.SetHeaderFuncMode(func() {}, false)
-	pwidth, pheight := pdf.GetPageSize()
+	pdf.SetMargins(0.0, 0.0, 0.0)
+	pdf.SetCellMargin(0.0)
 
 	for i, p := range pages {
 		// get image
-		pdf.RegisterImageReader(title+strconv.Itoa(i), imgType[i], bytes.NewBuffer(p))
+		pdf.RegisterImageReader(title+strconv.Itoa(i), p.iType, bytes.NewBuffer(p.image))
 		if pdf.Ok() {
 			options := gofpdf.ImageOptions{
 				ReadDpi:   false,
-				ImageType: imgType[i],
+				ImageType: p.iType,
 			}
 			// add image to page
-			pdf.ImageOptions(title+strconv.Itoa(i), 0, pdf.GetY(), pwidth, pheight, true, options, 0, "")
+			pdf.ImageOptions(title+strconv.Itoa(i), 0, -1, p.width, p.height, true, options, 0, "")
 		}
 		inc(bar, 1)
 	}
@@ -254,13 +265,17 @@ func parseEpisode(urlStr string, bar *mpb.Bar) {
 				ppt.Infoln("parsing episode panels...")
 			}
 
-			var imgType []string
-			var panels [][]byte
+			var maxWidth float64
+			var avgHeight float64
+			width := 8.33
+			height := 13.33
+
 			totalPanels := len(r.HTMLDoc.Find("#_imageList").Find("img").Nodes)
 			if bar != nil {
-				bar.SetTotal(int64(float64(totalPanels)*1.5), false)
+				bar.SetTotal(int64(float64(totalPanels)), false)
 			}
 
+			var panels []Panel
 			r.HTMLDoc.Find("#_imageList").Find("img").Each(
 				func(counter int, s *goquery.Selection) {
 					// find panel image url
@@ -289,13 +304,49 @@ func parseEpisode(urlStr string, bar *mpb.Bar) {
 						}
 
 						// handle response
-						panel, err := readImage(resp)
+						data, err := readImage(resp)
 						if err != nil {
 							return
 						}
 
 						imageType := resp.Header["Content-Type"][0][len("image/"):]
-						imgType = append(imgType, imageType)
+
+						imgWidth, ok := s.Attr("width")
+						if ok {
+							w, err := strconv.ParseFloat(imgWidth, 64)
+							if err != nil {
+								ppt.Errorln("failed to parse width:", err.Error())
+							} else {
+								width = float64(w+15) * 0.0104166667
+							}
+						}
+
+						imgHeight, ok := s.Attr("height")
+						if ok {
+							h, err := strconv.ParseFloat(imgHeight, 64)
+							if err != nil {
+								ppt.Errorln("failed to parse width:", err.Error())
+							} else {
+								if args.Verbose {
+									ppt.Verboseln("height:", height)
+								}
+								height = float64(h) * 0.0104166667
+							}
+						}
+
+						panel := Panel{
+							url:    url,
+							image:  data,
+							iType:  imageType,
+							width:  width,
+							height: height,
+						}
+
+						if width > maxWidth {
+							maxWidth = width
+						}
+
+						avgHeight += height
 
 						panels = append(panels, panel)
 
@@ -304,14 +355,23 @@ func parseEpisode(urlStr string, bar *mpb.Bar) {
 				},
 			)
 
+			avgHeight /= float64(len(panels))
+			if avgHeight < 1280 {
+				avgHeight = 1280.0 * 0.0104166667
+			}
+
 			if bar != nil {
 				total := len(panels) + totalPanels + 1
 				bar.SetTotal(int64(total), false)
 			}
 
+			if args.Verbose {
+				ppt.Verboseln("maxWidth:", maxWidth, "avgHeight:", avgHeight)
+			}
+
 			// create episode pdf
 			title := episodeMap[g.Opt.StartURLs[0]]
-			createPDF(title, panels, imgType, bar)
+			createPDF(title, panels, maxWidth, avgHeight, bar)
 		},
 		LogDisabled: !args.Verbose,
 	}).Start()
