@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -52,6 +53,13 @@ var args struct {
 
 func cleanString(str string) string {
 	return replacer.Replace(str)
+}
+
+func addLog(msg string) {
+	err := ioutil.WriteFile("./"+comic.Title+"/log.txt", []byte(msg), 0755)
+	if err != nil {
+		ppt.Errorln("failed to write to log file:", err.Error())
+	}
 }
 
 func main() {
