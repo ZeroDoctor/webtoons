@@ -113,7 +113,10 @@ func parseInfo(list string, bar *mpb.Bar) {
 			end, _ := r.HTMLDoc.Find("#_listUl").Find("li").Attr("data-episode-no")
 			comic.End, err = strconv.Atoi(end)
 			if err != nil {
-				ppt.Errorln("failed to parse latest episode number:", err.Error())
+				ppt.TogglePrint()
+				errStr := ppt.Errorln("failed to parse latest episode number:", err.Error())
+				addLog(errStr)
+				ppt.TogglePrint()
 			}
 
 			inc(bar, 1)
@@ -217,9 +220,6 @@ func createPDF(title string, pages []Panel, maxWidth, avgHeight float64, bar *mp
 		// desired comic size is 800x1280 pixels which convert to "inches" is 8.33x13.33
 		Size: gofpdf.SizeType{Wd: maxWidth, Ht: avgHeight},
 	})
-	_, h := pdf.GetPageSize()
-	pdf.SetFont("Arial", "B", 16)
-	pdf.Cell(0.0, h/2, "Ignore Page")
 	// remove pdf header
 	pdf.SetMargins(0.0, 0.0, 0.0)
 	pdf.SetCellMargin(0.0)
@@ -300,7 +300,10 @@ func parseEpisode(urlStr string, bar *mpb.Bar) {
 						// send request
 						resp, err := g.Client.Do(req)
 						if err != nil {
-							ppt.Errorln("failed request:", err.Error())
+							ppt.TogglePrint()
+							errStr := ppt.Errorln("failed request:", err.Error())
+							addLog(errStr)
+							ppt.TogglePrint()
 						}
 
 						// handle response
@@ -315,7 +318,10 @@ func parseEpisode(urlStr string, bar *mpb.Bar) {
 						if ok {
 							w, err := strconv.ParseFloat(imgWidth, 64)
 							if err != nil {
-								ppt.Errorln("failed to parse width:", err.Error())
+								ppt.TogglePrint()
+								errStr := ppt.Errorln("failed to parse width:", err.Error())
+								addLog(errStr)
+								ppt.TogglePrint()
 							} else {
 								width = float64(w+15) * 0.0104166667
 							}
