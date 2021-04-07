@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"strings"
 	"time"
 
 	"github.com/alexflint/go-arg"
@@ -24,6 +25,19 @@ var (
 	info       = make(chan Info, 1)
 	wait       = make(chan bool, 1)
 	comic      Info
+
+	replacer *strings.Replacer = strings.NewReplacer(
+		":", "_",
+		"<", "[",
+		">", "]",
+		" ", "_",
+		"|", "-",
+		"\"", "",
+		"/", ".",
+		"\\", ".",
+		"?", "",
+		"*", "",
+	)
 )
 
 var args struct {
@@ -34,6 +48,10 @@ var args struct {
 	End      int    `arg:"-e,--end" help:"episode number to end on" default:"-1"`
 	Workers  int    `arg:"-w,--workers" help:"number of files to download async" default:"5"`
 	Verbose  bool   `arg:"-v,--verbose" help:"some extra logging"`
+}
+
+func cleanString(str string) string {
+	return replacer.Replace(str)
 }
 
 func main() {

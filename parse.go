@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -99,7 +98,7 @@ func parseInfo(list string, bar *mpb.Bar) {
 			}
 			var comic Info
 			var err error
-			comic.Title = r.HTMLDoc.Find(".info").Find(".subj").Text()
+			comic.Title = cleanString(r.HTMLDoc.Find(".info").Find(".subj").Text())
 			comic.Subscriber = r.HTMLDoc.Find(".grade_area").Find("span.ico_subscribe + em").Text()
 			comic.Rating = r.HTMLDoc.Find("#_starScoreAverage").Text()
 			comic.Summary = r.HTMLDoc.Find("#_asideDetail > p.summary").Text()
@@ -230,15 +229,7 @@ func createPDF(title string, pages [][]byte, imgType []string, bar *mpb.Bar) {
 	}
 
 	// replace windows
-	replacer := strings.NewReplacer(
-		":", "_",
-		"<", "_",
-		">", "_",
-		" ", "_",
-		"*", "_",
-		"|", "_",
-	)
-	title = replacer.Replace(title)
+	title = cleanString(title)
 	err := pdf.OutputFileAndClose("./" + comic.Title + "/" + title + ".pdf")
 	if err != nil {
 		ppt.Errorln("failed to create pdf:", err.Error())
