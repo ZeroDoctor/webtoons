@@ -34,6 +34,11 @@ webtoons.exe -t=1099 -s=1 -e=5
 
 ## TODO
 
-* correct the size of each panel
-* menu of comics when no arguments given (long term goal)
+* correct height of each panel in pdf
+* handle errors gracefully
 * cancel download gracefully
+
+## GOALS
+
+* output in other format instead of only pdf (mid term goal)
+* menu of comics when no arguments given (long term goal)
