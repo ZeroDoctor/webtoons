@@ -3,16 +3,21 @@
 ## Usage
 
 ```txt
-Usage: webtoons --title TITLE --start START [--end END] [--workers WORKERS] [--verbose]
+Usage: webtoons.exe [--genre GENRE] [--title TITLE] [--start START] [--end END] [--workers WORKERS] [--verbose] TITLENUM
+
+Positional arguments:
+  TITLENUM                desire title number to download
 
 Options:
-    --title, -t TITLE     desire title number to download
+	--genre, -g GENRE     genre specified in url [default: GENRE]
 
-    --start, -s START     episode number to start from
+    --title, -t TITLE     title specified in url [default: TITLE]
 
-    --workers, -w WORKERS number of files to download async [default: 5]
+    --start, -s START     episode number to start from [default: 1]
 
-    --end, -e END         episode number to end on [default: 50000]
+    --end, -e END         episode number to end on [default: -1]
+
+	--workers, -w WORKERS number of files to download at the same time [default: 10]
 
     --verbose, -v         some extra logging
 
