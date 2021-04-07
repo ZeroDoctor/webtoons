@@ -42,3 +42,7 @@ webtoons.exe -t=1099 -s=1 -e=5
 
 * output in other format instead of only pdf (mid term goal)
 * menu of comics when no arguments given (long term goal)
+
+## Released Using Command
+
+go build -ldflags="-s -w" . && upx --lzma webtoons.exe
