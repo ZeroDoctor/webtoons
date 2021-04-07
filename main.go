@@ -46,7 +46,7 @@ var args struct {
 	Title    string `arg:"-t,--title" help:"title specified in url" default:"TITLE"`
 	Start    int    `arg:"-s,--start" help:"episode number to start from" default:"1"`
 	End      int    `arg:"-e,--end" help:"episode number to end on" default:"-1"`
-	Workers  int    `arg:"-w,--workers" help:"number of files to download async" default:"5"`
+	Workers  int    `arg:"-w,--workers" help:"number of files to download async" default:"8"`
 	Verbose  bool   `arg:"-v,--verbose" help:"some extra logging"`
 }
 
