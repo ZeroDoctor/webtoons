@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -30,7 +31,8 @@ type Panel struct {
 
 // create folder and about file from comic info
 func createInit(comic Info) {
-	if _, err := os.Stat("./" + comic.Title); os.IsNotExist(err) {
+	var err error
+	if _, err = os.Stat("./" + comic.Title); os.IsNotExist(err) {
 		err := os.Mkdir("./"+comic.Title, 0755)
 		if err != nil {
 			ppt.Errorln("failed to create folder:", err.Error())
@@ -38,7 +40,12 @@ func createInit(comic Info) {
 		}
 	}
 
-	if _, err := os.Stat("./" + comic.Title + "/about.json"); os.IsNotExist(err) {
+	if err != nil && !os.IsNotExist(err) {
+		ppt.Errorln("failed to create folder:", err.Error())
+		os.Exit(1)
+	}
+
+	if _, err = os.Stat("./" + comic.Title + "/about.json"); os.IsNotExist(err) {
 		data, err := json.MarshalIndent(comic, "", "  ")
 		if err != nil {
 			ppt.Errorln("failed to marshal comic info:", err.Error())
@@ -51,12 +58,17 @@ func createInit(comic Info) {
 			os.Exit(1)
 		}
 	}
+
+	if err != nil && !os.IsNotExist(err) {
+		ppt.Errorln("failed to create about file:", err.Error())
+		os.Exit(1)
+	}
 }
 
 func parse() {
 	// * note: if webtoons update there url schema, we would have to figure out this all over again
 	list := "https://www.webtoons.com/en/" + args.Genre + "/" + args.Title + "/list?title_no=" + args.TitleNum
-	url := "http://www.webtoons.com/en/" + args.Genre + "/" + args.Title + "/CHAPTER/viewer?title_no=" + args.TitleNum + "&episode_no=1"
+	url := "http://www.webtoons.com/en/" + args.Genre + "/" + args.Title + "/CHAPTER/viewer?title_no=" + args.TitleNum + "&episode_no="
 
 	// parse comic infomation like title, author, genre, etc.
 	ppt.Infoln("fetching comic from book store:", list)
@@ -65,7 +77,12 @@ func parse() {
 	})
 
 	comic = <-info
+	fmt.Printf("title: %s\nsubs: %s\nrating: %s\nsummary: %s\n",
+		comic.Title, comic.Subscriber, comic.Rating, comic.Summary)
+	time.Sleep(time.Millisecond * 500)
+
 	createInit(comic)
+	url += comic.Episode
 
 	// parse comic episode list
 	addProgress("episode list:", "fetching...", func(bar *mpb.Bar) {
@@ -106,11 +123,23 @@ func parseInfo(list string, bar *mpb.Bar) {
 			}
 			var comic Info
 			var err error
+			var ok bool
 			comic.Title = cleanString(r.HTMLDoc.Find(".info").Find(".subj").Text())
 			comic.Subscriber = r.HTMLDoc.Find(".grade_area").Find("span.ico_subscribe + em").Text()
 			comic.Rating = r.HTMLDoc.Find("#_starScoreAverage").Text()
 			comic.Summary = r.HTMLDoc.Find("#_asideDetail > p.summary").Text()
-			end, _ := r.HTMLDoc.Find("#_listUl").Find("li").Attr("data-episode-no")
+			comic.Episode, ok = r.HTMLDoc.Find("#_listUl > li").Attr("data-episode-no")
+			if !ok {
+				ppt.Errorln("failed to parse latest episode url:", err.Error())
+				os.Exit(1)
+			}
+			endStr := r.HTMLDoc.Find("#_listUl > li").Find(".tx").Text()
+			endStr = strings.Split(endStr, "#")[1]
+			if args.Verbose {
+				ppt.Verboseln("found end:", endStr)
+			}
+
+			end := strings.Replace(endStr, "#", "", -1)
 			comic.End, err = strconv.Atoi(end)
 			if err != nil {
 				ppt.TogglePrint()
@@ -168,12 +197,7 @@ func parseComic(urlStr string, bar *mpb.Bar) {
 			}
 			r.HTMLDoc.Find("#topEpisodeList").Find("div.episode_cont").Find("li").Each(
 				func(i int, s *goquery.Selection) {
-					episodeNumber, _ := s.Attr("data-episode-no")
-					num, err := strconv.Atoi(episodeNumber)
-					if err != nil {
-						ppt.Errorln("failed to parse episode number:", err.Error())
-						os.Exit(1)
-					}
+					num := i + 1
 					if args.End != -1 && (num > args.End || num < args.Start) {
 						ppt.Verboseln("Skipped episode:", num)
 						return
@@ -333,9 +357,6 @@ func parseEpisode(urlStr string, bar *mpb.Bar) {
 							if err != nil {
 								ppt.Errorln("failed to parse width:", err.Error())
 							} else {
-								if args.Verbose {
-									ppt.Verboseln("height:", height)
-								}
 								height = float64(h) * 0.0104166667
 							}
 						}
