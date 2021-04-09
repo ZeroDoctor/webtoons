@@ -28,7 +28,7 @@ Options:
 
 ## Exmaple
 
-webtoons.exe -t=1099 -s=1 -e=5
+webtoons.exe 1099 -s=1 -e=5
 
 ^^^ This will download gosus' episodes 1 through 5
 
