@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -18,6 +19,7 @@ type Info struct {
 	Summary    string
 	Creators   []string // i.e written by ann | art by frank
 	End        int
+	Episode    string
 }
 
 var (
@@ -31,7 +33,6 @@ var (
 		":", "_",
 		"<", "[",
 		">", "]",
-		" ", "_",
 		"|", "-",
 		"\"", "",
 		"/", ".",
@@ -52,7 +53,15 @@ var args struct {
 }
 
 func cleanString(str string) string {
-	return replacer.Replace(str)
+	var buffer bytes.Buffer
+
+	for _, r := range str {
+		if r > 31 && r < 127 {
+			buffer.WriteRune(r)
+		}
+	}
+
+	return replacer.Replace(buffer.String())
 }
 
 func addLog(msg string) {
