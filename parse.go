@@ -30,18 +30,24 @@ type Panel struct {
 
 // create folder and about file from comic info
 func createInit(comic Info) {
-	if _, err := os.Stat("./" + comic.Title); os.IsNotExist(err) {
-		err := os.Mkdir("./"+comic.Title, 0755)
+	ppt.Infoln("creating output folder...")
+	var err error
+	if _, err = os.Stat("./" + comic.Title); os.IsNotExist(err) {
+		err = os.Mkdir("./"+comic.Title, 0755)
 		if err != nil {
 			ppt.Errorln("failed to create folder:", err.Error())
 			os.Exit(1)
 		}
+	} else if err != nil {
+		ppt.Errorln("failed to init folder:", err.Error())
+		os.Exit(1)
 	}
 
-	if _, err := os.Stat("./" + comic.Title + "/about.json"); os.IsNotExist(err) {
-		data, err := json.MarshalIndent(comic, "", "  ")
+	var data []byte
+	if _, err = os.Stat("./" + comic.Title + "/about.json"); os.IsNotExist(err) {
+		data, err = json.MarshalIndent(comic, "", "  ")
 		if err != nil {
-			ppt.Errorln("failed to marshal comic info:", err.Error())
+			ppt.Errorln("failed to marshal comic infos:", err.Error())
 			os.Exit(1)
 		}
 
@@ -66,6 +72,7 @@ func parse() {
 
 	comic = <-info
 	createInit(comic)
+	ppt.SetCurrentLevel(ppt.InfoLevel)
 
 	// parse comic episode list
 	addProgress("episode list:", "fetching...", func(bar *mpb.Bar) {
@@ -210,7 +217,7 @@ func readImage(resp *http.Response) ([]byte, error) {
 	return data, nil
 }
 
-func createPDF(title string, pages []Panel, maxWidth, avgHeight float64, bar *mpb.Bar) {
+func createPDF(title string, pages []Panel, bar *mpb.Bar) {
 	if args.Verbose {
 		ppt.Infoln("creating " + title + ".pdf...")
 	}
@@ -218,7 +225,7 @@ func createPDF(title string, pages []Panel, maxWidth, avgHeight float64, bar *mp
 		OrientationStr: "P",
 		UnitStr:        "in",
 		// desired comic size is 800x1280 pixels which convert to "inches" is 8.33x13.33
-		Size: gofpdf.SizeType{Wd: maxWidth, Ht: avgHeight},
+		Size: gofpdf.SizeType{Wd: 8.33, Ht: 13.33},
 	})
 	// remove pdf header
 	pdf.SetMargins(0.0, 0.0, 0.0)
@@ -265,8 +272,6 @@ func parseEpisode(urlStr string, bar *mpb.Bar) {
 				ppt.Infoln("parsing episode panels...")
 			}
 
-			var maxWidth float64
-			var avgHeight float64
 			width := 8.33
 			height := 13.33
 
@@ -348,12 +353,6 @@ func parseEpisode(urlStr string, bar *mpb.Bar) {
 							height: height,
 						}
 
-						if width > maxWidth {
-							maxWidth = width
-						}
-
-						avgHeight += height
-
 						panels = append(panels, panel)
 
 						inc(bar, 1)
@@ -361,23 +360,14 @@ func parseEpisode(urlStr string, bar *mpb.Bar) {
 				},
 			)
 
-			avgHeight /= float64(len(panels))
-			if avgHeight < 1280 {
-				avgHeight = 1280.0 * 0.0104166667
-			}
-
 			if bar != nil {
 				total := len(panels) + totalPanels + 1
 				bar.SetTotal(int64(total), false)
 			}
 
-			if args.Verbose {
-				ppt.Verboseln("maxWidth:", maxWidth, "avgHeight:", avgHeight)
-			}
-
 			// create episode pdf
 			title := episodeMap[g.Opt.StartURLs[0]]
-			createPDF(title, panels, maxWidth, avgHeight, bar)
+			createPDF(title, panels, bar)
 		},
 		LogDisabled: !args.Verbose,
 	}).Start()

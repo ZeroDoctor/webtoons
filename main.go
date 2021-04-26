@@ -52,7 +52,17 @@ var args struct {
 }
 
 func cleanString(str string) string {
-	return replacer.Replace(str)
+
+	var b strings.Builder
+	for _, r := range str {
+		if r >= 32 && r <= 126 {
+			b.WriteRune(r)
+		}
+	}
+
+	str = replacer.Replace(b.String())
+
+	return str
 }
 
 func addLog(msg string) {
