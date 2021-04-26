@@ -18,6 +18,7 @@ type Info struct {
 	Summary    string
 	Creators   []string // i.e written by ann | art by frank
 	End        int
+	Episode    string
 }
 
 var (
@@ -31,7 +32,6 @@ var (
 		":", "_",
 		"<", "[",
 		">", "]",
-		" ", "_",
 		"|", "-",
 		"\"", "",
 		"/", ".",
