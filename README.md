@@ -36,6 +36,7 @@ webtoons.exe 1099 -s=1 -e=5
 
 * handle errors gracefully
 * cancel download gracefully
+* add subscription to urls
 
 ## GOALS
 
