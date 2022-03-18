@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -227,7 +228,7 @@ func parseComic(urlStr string, bar *mpb.Bar) {
 }
 
 // converts the response body to image bytes
-func readImage(resp *http.Response) ([]byte, error) {
+func readHTTPImage(resp *http.Response) ([]byte, error) {
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		errStr := ppt.Errorln("failed to read body:", err.Error())
@@ -277,6 +278,22 @@ func createPDF(title string, pages []Panel, bar *mpb.Bar) {
 	inc(bar, 1)
 }
 
+func createPanel(imgData []byte) (Panel, error) {
+	var panel Panel
+
+	img, t, err := image.Decode(bytes.NewBuffer(imgData))
+	if err != nil {
+		return panel, err
+	}
+
+	panel.image = imgData
+	panel.iType = t
+	panel.width = float64(img.Bounds().Dx())
+	panel.height = float64(img.Bounds().Dy())
+
+	return panel, nil
+}
+
 func parseEpisode(urlStr string, bar *mpb.Bar) {
 	start := time.Now()
 	geziyor.NewGeziyor(&geziyor.Options{
@@ -291,9 +308,6 @@ func parseEpisode(urlStr string, bar *mpb.Bar) {
 			if args.Verbose {
 				ppt.Infoln("parsing episode panels...")
 			}
-
-			width := 8.33
-			height := 13.33
 
 			totalPanels := len(r.HTMLDoc.Find("#_imageList").Find("img").Nodes)
 			if bar != nil {
@@ -332,43 +346,44 @@ func parseEpisode(urlStr string, bar *mpb.Bar) {
 						}
 
 						// handle response
-						data, err := readImage(resp)
+						data, err := readHTTPImage(resp)
 						if err != nil {
 							return
 						}
 
-						imageType := resp.Header["Content-Type"][0][len("image/"):]
+						// imageType := resp.Header["Content-Type"][0][len("image/"):]
+						//
+						// imgWidth, ok := s.Attr("width")
+						// if ok {
+						// 	w, err := strconv.ParseFloat(imgWidth, 64)
+						// 	if err != nil {
+						// 		ppt.TogglePrint()
+						// 		errStr := ppt.Errorln("failed to parse width:", err.Error())
+						// 		addLog(errStr)
+						// 		ppt.TogglePrint()
+						// 	} else {
+						// 		width = float64(w+15) * 0.0104166667
+						// 	}
+						// }
+						//
+						// imgHeight, ok := s.Attr("height")
+						// if ok {
+						// 	h, err := strconv.ParseFloat(imgHeight, 64)
+						// 	if err != nil {
+						// 		ppt.Errorln("failed to parse width:", err.Error())
+						// 	} else {
+						// 		height = float64(h) * 0.0104166667
+						// 	}
+						// }
 
-						imgWidth, ok := s.Attr("width")
-						if ok {
-							w, err := strconv.ParseFloat(imgWidth, 64)
-							if err != nil {
-								ppt.TogglePrint()
-								errStr := ppt.Errorln("failed to parse width:", err.Error())
-								addLog(errStr)
-								ppt.TogglePrint()
-							} else {
-								width = float64(w+15) * 0.0104166667
-							}
+						panel, err := createPanel(data)
+						if err != nil {
+							ppt.TogglePrint()
+							errStr := ppt.Errorln("failed to parse width:", err.Error())
+							addLog(errStr)
+							ppt.TogglePrint()
 						}
-
-						imgHeight, ok := s.Attr("height")
-						if ok {
-							h, err := strconv.ParseFloat(imgHeight, 64)
-							if err != nil {
-								ppt.Errorln("failed to parse width:", err.Error())
-							} else {
-								height = float64(h) * 0.0104166667
-							}
-						}
-
-						panel := Panel{
-							url:    url,
-							image:  data,
-							iType:  imageType,
-							width:  width,
-							height: height,
-						}
+						panel.url = url
 
 						panels = append(panels, panel)
 
